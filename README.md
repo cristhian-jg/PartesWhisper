@@ -4,4 +4,4 @@ Este generador de partes está diseñado específicamente para gestionar los par
 Utiliza la tecnología de reconocimiento de voz Whisper para transcribir el contenido dictado por micrófono y la biblioteca FPDF2 para generar automáticamente un PDF bien estructurado y profesional. 
 Su interfaz sencilla e intuitiva permite crear partes de forma rápida y eficiente, optimizando el tiempo en tareas administrativas.
 
-![Generador de Partes](Generador_ de_Partes.png)
+![Generador de Partes](Generador_de_Partes.png)
