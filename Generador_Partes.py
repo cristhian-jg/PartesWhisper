@@ -15,7 +15,10 @@ from PyQt5.QtWidgets import (
     QWidget,
 )
 
-SAMPLE_RATE = 44100
+print(sd.query_devices())
+sd.default.device = (1, None)
+
+SAMPLE_RATE = 48000
 DURATION = 30
 
 # Función para grabar un audio con sounddevice
