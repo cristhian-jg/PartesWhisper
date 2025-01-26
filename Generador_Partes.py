@@ -2,7 +2,7 @@ import os
 import re
 from fpdf import FPDF
 import whisper
-import sounddevice as sd
+import pyaudio
 import wave
 from PyQt5.QtWidgets import (
     QApplication,
@@ -15,26 +15,55 @@ from PyQt5.QtWidgets import (
     QWidget,
 )
 
-print(sd.query_devices())
-sd.default.device = (1, None)
-
 SAMPLE_RATE = 48000
 DURATION = 30
 
-# Función para grabar un audio con sounddevice
+# Función para grabar un audio con pyaudio
 def grabar_audio(filename):
+    CHUNK = 1024  # Tamaño del buffer
+    FORMAT = pyaudio.paInt16  # Formato de los datos de audio
+    CHANNELS = 1  # Número de canales (mono)
+    RATE = 44100  # Frecuencia de muestreo
+    DURATION = 30  # Duración de la grabación en segundos
+
+    # Mostrar mensaje antes de grabar
     msg = QMessageBox()
     msg.setIcon(QMessageBox.Information)
     msg.setText("Pulsa OK cuando estés preparado. Tienes 30 segundos para grabar audio.")
     msg.setWindowTitle("Iniciando Grabación.")
     msg.exec_()
-    recording = sd.rec(int(SAMPLE_RATE * DURATION), samplerate=SAMPLE_RATE, channels=1)
-    sd.wait()
+
+    # Inicializar PyAudio
+    audio = pyaudio.PyAudio()
+
+    # Configurar el stream de entrada
+    stream = audio.open(format=FORMAT, channels=CHANNELS,
+                        rate=RATE, input=True,
+                        frames_per_buffer=CHUNK)
+
+    frames = []
+    print("Grabando...")
+
+    # Grabar durante la duración especificada
+    for _ in range(0, int(RATE / CHUNK * DURATION)):
+        data = stream.read(CHUNK)
+        frames.append(data)
+
+    print("Grabación finalizada.")
+
+    # Detener el stream y cerrarlo
+    stream.stop_stream()
+    stream.close()
+    audio.terminate()
+
+    # Guardar los datos en un archivo WAV
     with wave.open(filename, 'wb') as wf:
-        wf.setnchannels(2)
-        wf.setsampwidth(2)
-        wf.setframerate(SAMPLE_RATE)
-        wf.writeframes(recording.tobytes())
+        wf.setnchannels(CHANNELS)
+        wf.setsampwidth(audio.get_sample_size(FORMAT))
+        wf.setframerate(RATE)
+        wf.writeframes(b''.join(frames))
+
+    # Mostrar mensaje al usuario
     msg.setText(f"Audio guardado en: {filename}")
     msg.exec_()
 
