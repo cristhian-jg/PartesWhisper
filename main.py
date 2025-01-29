@@ -96,7 +96,7 @@ def extraer_datos(transcripcion):
 # Función para generar el parte en PDF
 def generar_parte(fecha, cliente, domicilio, concepto, horas):
 
-    print(f"Fecha: {fecha}", f"Cliente: {cliente}", f"Dirección: {domicilio}", f"Concepto: {concepto}", f"Horas: {horas}", sep="\n")
+    print(f"Fecha: {fecha}", f"Cliente: {cliente}", f"Domicilio: {domicilio}", f"Concepto: {concepto}", f"Horas: {horas}", sep="\n")
 
     pdf = FPDF()
     pdf.add_page()
@@ -221,7 +221,7 @@ class MainWindow(QMainWindow):
         )
         if filename:
             grabar_audio(filename)
-            transcripcion = transcribir_audio("Audio/synthesis.wav")
+            transcripcion = transcribir_audio(filename)
             print(transcripcion)
             datos = extraer_datos(transcripcion)
             generar_parte(
