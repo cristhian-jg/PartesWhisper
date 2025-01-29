@@ -15,9 +15,6 @@ from PyQt5.QtWidgets import (
     QWidget,
 )
 
-SAMPLE_RATE = 48000
-DURATION = 30
-
 # Función para grabar un audio con pyaudio
 def grabar_audio(filename):
     CHUNK = 1024  # Tamaño del buffer
@@ -69,18 +66,20 @@ def grabar_audio(filename):
 
 # Función para transcribir el audio con Whisper
 def transcribir_audio(audio):
-    modelo = whisper.load_model("base")
+    modelo = whisper.load_model("medium")
     resultado = modelo.transcribe(audio, language="es")
-    return resultado['text']
+    texto = resultado['text']
+    texto_procesado = texto.replace(".", "").replace(",", "")
+    return texto_procesado
 
 # Función para procesar la transcripción y extraer datos
 def extraer_datos(transcripcion):
     patrones = {
-        "fecha": r"(?i)fecha,\s*([^\.]+)\.",  # Captura hasta el primer punto
-        "cliente": r"(?i)cliente,\s*([^,]+),",  # Captura hasta la siguiente coma
-        "direccion": r"(?i)dirección,\s*([^,]+),",  # Igual
-        "concepto": r"(?i)concepto,\s*(.*?)(?:\shoras|$)",  # Captura hasta 'horas' o fin
-        "horas": r"(?i)horas,\s*(.*?)(?:\.|$)"  # Captura hasta el punto o fin
+        "fecha": r"(?i)fecha\s*(.*?)(?=\s*cliente)",
+        "cliente": r"(?i)cliente\s*(.*?)(?=\s*domicilio)",
+        "domicilio": r"(?i)domicilio\s*(.*?)(?=\s*concepto)",
+        "concepto": r"(?i)concepto\s*(.*?)(?=\s*horas)", 
+        "horas": r"(?i)horas\s*(.*?)(?:\.|$)"
     }
     datos = {}
 
@@ -95,7 +94,10 @@ def extraer_datos(transcripcion):
     return datos
 
 # Función para generar el parte en PDF
-def generar_parte(fecha, cliente, direccion, concepto, horas):
+def generar_parte(fecha, cliente, domicilio, concepto, horas):
+
+    print(f"Fecha: {fecha}", f"Cliente: {cliente}", f"Dirección: {domicilio}", f"Concepto: {concepto}", f"Horas: {horas}", sep="\n")
+
     pdf = FPDF()
     pdf.add_page()
     pdf.set_font("Arial", size=12)
@@ -137,7 +139,7 @@ def generar_parte(fecha, cliente, direccion, concepto, horas):
 
     pdf.set_text_color(0,0,0)
     
-    pdf.cell(0, 10, text=f"{direccion}", border=1, ln=True, align="L")
+    pdf.cell(0, 10, text=f"{domicilio}", border=1, ln=True, align="L")
 
     pdf.ln(10)
 
@@ -178,7 +180,7 @@ def generar_parte(fecha, cliente, direccion, concepto, horas):
     pdf.ln(10)
 
     # Guardar el archivo
-    filename = os.path.join("Partes", f"{cliente.replace(' ', '_')}_parte_prueba.pdf")
+    filename = os.path.join("Partes", f"{cliente.replace(' ', '_')}_parte.pdf")
     pdf.output(filename)
     print(f"Parte generado: {filename}")
 
@@ -219,10 +221,11 @@ class MainWindow(QMainWindow):
         )
         if filename:
             grabar_audio(filename)
-            transcripcion = transcribir_audio(filename)
+            transcripcion = transcribir_audio("Audio/synthesis.wav")
+            print(transcripcion)
             datos = extraer_datos(transcripcion)
             generar_parte(
-                datos["fecha"], datos["cliente"], datos["direccion"], datos["concepto"], datos["horas"]
+                datos["fecha"], datos["cliente"], datos["domicilio"], datos["concepto"], datos["horas"]
             )
 
 # Configuración de la aplicación
